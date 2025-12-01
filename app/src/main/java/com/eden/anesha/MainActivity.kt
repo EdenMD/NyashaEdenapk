@@ -1,27 +1,33 @@
 package com.eden.anesha
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.webkit.WebView
-import android.webkit.WebViewClient
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val myWebView: WebView = findViewById(R.id.webview)
-        myWebView.webViewClient = WebViewClient() // This prevents opening links in an external browser
-        myWebView.settings.javaScriptEnabled = true // Enable JavaScript
-        myWebView.loadUrl("https://xbvercel.vercel.app") // Load your desired URL
-    }
+        val webView: WebView = findViewById(R.id.webview)
+        webView.settings.javaScriptEnabled = true
+        webView.loadUrl("https://xbvercel.vercel.app")
 
-    override fun onBackPressed() {
-        val myWebView: WebView = findViewById(R.id.webview)
-        if (myWebView.canGoBack()) {
-            myWebView.goBack()
-        } else {
-            super.onBackPressed()
-        }
+        // This is the new, correct way to handle back button presses.
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (webView.canGoBack()) {
+                    webView.goBack()
+                } else {
+                    // If the WebView can't go back, then we call the default
+                    // behavior (which is to close the app).
+                    if (isEnabled) {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
+                }
+            }
+        })
     }
 }
