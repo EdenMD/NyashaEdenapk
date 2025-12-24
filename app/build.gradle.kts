@@ -1,3 +1,4 @@
+//----start of build_gradle_config----
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -9,7 +10,7 @@ plugins {
 base {
     // Naming APK // AAB
     val timestamp = SimpleDateFormat("dd-MM-yyyy_hh-mm").format(Date())
-    archivesName = "${ProjectSetting.NAME_APK}-[${ProjectSetting.PROJECT_VERSION_NAME}]-$timestamp"
+    archiveFileName = "${ProjectSetting.NAME_APK}-[${ProjectSetting.PROJECT_VERSION_NAME}]-$timestamp"
 }
 
 android {
@@ -35,7 +36,7 @@ android {
         create("release") {
             // You need to specify either an absolute path or include the
             // keystore file in the same directory as the build.gradle file.
-            // [PROJECT FOLDER NAME/app/[COPY YOUT KEY STORE] .jks in here
+            // [PROJECT FOLDER NAME/app/[COPY YOUT KEY STORE].jks in here
             storeFile = file(ProjectSetting.KEY_PATH)
             storePassword = ProjectSetting.KEY_STORE_PASSWORD
             keyAlias = ProjectSetting.KEY_ALIAS
@@ -86,8 +87,10 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.material)
+    implementation("com.google.android.gms:play-services-ads:23.0.0") // AdMob dependency
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
+//----end of build_gradle_config----
