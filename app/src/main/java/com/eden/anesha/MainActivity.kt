@@ -14,7 +14,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.os.Message // Import Message for onCreateWindow
+import android.os.Message // Import Message for onCreateViewWindow
 import android.webkit.JavascriptInterface
 import android.webkit.URLUtil
 import android.webkit.ValueCallback
@@ -28,6 +28,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.ads.MobileAds // Import for AdMob
 
 class MainActivity : AppCompatActivity() {
 
@@ -52,12 +53,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         webView = findViewById(R.id.webview)
+
+        // Initialize MobileAds for AdMob
+        MobileAds.initialize(this) {}
 
         checkAndRequestPermissions()
         createNotificationChannel()
@@ -67,14 +70,11 @@ class MainActivity : AppCompatActivity() {
             domStorageEnabled = true
             allowFileAccess = true
             javaScriptCanOpenWindowsAutomatically = true
-
             // IMPORTANT for handling links that open in new windows (e.g., target="_blank")
             setSupportMultipleWindows(true)
         }
 
-        // --- FIX STARTS HERE ---
-
-        // 1. Set a WebViewClient to handle URL loading within the WebView
+        // --- WebViewClient for handling URL loading within the WebView ---
         webView.webViewClient = object : WebViewClient() {
 
             // For API 21 and above
@@ -137,12 +137,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        webView.addJavascriptInterface(WebAppInterface(this), "Android")
+        webView.addJavascriptInterface(WebappInterface(this), "Android")
 
-        // 2. Adjust WebChromeClient to handle new window requests
+        // --- WebChromeClient to handle new window requests and file choosers ---
         webView.webChromeClient = object : WebChromeClient() {
             override fun onShowFileChooser(
-                view: WebView?,
+                webView: WebView?,
                 filePathCallback: ValueCallback<Array<Uri>>?,
                 fileChooserParams: FileChooserParams?
             ): Boolean {
@@ -198,17 +198,25 @@ class MainActivity : AppCompatActivity() {
         }
         // --- FIX ENDS HERE ---
 
+        //----start of download_listener_setup----
         webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, _ ->
-            val request = DownloadManager.Request(Uri.parse(url))
-            request.setMimeType(mimetype)
-            request.setDescription("Downloading file...")
-            request.setTitle(URLUtil.guessFileName(url, contentDisposition, mimetype))
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(url, contentDisposition, mimetype))
-            val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
-            dm.enqueue(request)
-            Toast.makeText(applicationContext, "Downloading File", Toast.LENGTH_LONG).show()
+            try {
+                val request = DownloadManager.Request(Uri.parse(url))
+                request.setMimeType(mimetype)
+                request.setDescription("Downloading file...")
+                request.setTitle(URLUtil.guessFileName(url, contentDisposition, mimetype))
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(url, contentDisposition, mimetype))
+                val dm = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+                dm.enqueue(request)
+                Toast.makeText(applicationContext, "Downloading File", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                // Log the exception for debugging in a real app, e.g.:
+                // Log.e("DownloadManager", "Download failed: ${e.message}")
+                Toast.makeText(applicationContext, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
+        //----end of download_listener_setup----
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -237,7 +245,7 @@ class MainActivity : AppCompatActivity() {
         // but still relevant for older versions if you target them without scoped storage.
         // For downloads on modern Android, DownloadManager handles permissions internally.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { // Q is API 29
-             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }
@@ -260,7 +268,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    class WebAppInterface(private val context: Context) {
+    class WebappInterface(private val context: Context) {
         @JavascriptInterface
         fun showNotification(title: String, message: String) {
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
