@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!--start of manifest_config-->
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -15,7 +16,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.GithubAction"
+        android:usesCleartextTraffic="true"  <!-- Added for AdMob testing -->
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/> <!-- AdMob Test ID -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -25,5 +30,6 @@
             </intent-filter>
         </activity>
     </application>
+    <!--end of manifest_config-->
 
 </manifest>
